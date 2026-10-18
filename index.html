@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#f3f6f3">
+	<title>OBAYOLI | إدارة الموارد البشرية والرواتب</title>
+	<meta name="description" content="نظام متكامل لإدارة الموارد البشرية والرواتب بالمغرب، يشمل متابعة الحضور، التخطيط الأسبوعي، الإجازات، والعطل الرسمية.">
+	<meta property="og:title" content="OBAYOLI | إدارة الموارد البشرية والرواتب">
+	<meta property="og:description" content="نظام متكامل لإدارة الموارد البشرية والرواتب بالمغرب، يشمل متابعة الحضور، التخطيط الأسبوعي، الإجازات، والعطل الرسمية.">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+	<script src="https://unpkg.com/lucide@latest"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+	<script type="module">
+		import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+		import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+		window.FirebaseSDK = { initializeApp, getFirestore, doc, getDoc, setDoc, onSnapshot };
+	</script>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<div class="app" id="appShell">
+		<aside class="sidebar" aria-label="القائمة الرئيسية">
+			<div class="brand">
+				<div class="brand-mark"><i data-lucide="landmark"></i></div>
+				<div><div class="brand-name">OBAYOLI</div><div class="brand-caption">إدارة الموارد البشرية</div></div>
+			</div>
+			<div class="nav-label">القائمة الرئيسية</div>
+			<nav class="nav">
+				<button class="nav-item active" data-view="home" aria-current="page"><i data-lucide="layout-dashboard"></i><span>الرئيسية</span></button>
+				<button class="nav-item" data-view="employees"><i data-lucide="users"></i><span>الموظفون</span></button>
+				<button class="nav-item" data-view="planning"><i data-lucide="calendar-range"></i><span>التخطيط الأسبوعي</span></button>
+				<button class="nav-item" data-view="payroll"><i data-lucide="wallet-cards"></i><span>الرواتب</span></button>
+				<button class="nav-item" data-view="attendance"><i data-lucide="calendar-days"></i><span>الغيابات</span></button>
+				<button class="nav-item" data-view="attendance-records"><i data-lucide="history"></i><span>سجل الحضور</span></button>
+				<button class="nav-item" data-view="leaves"><i data-lucide="clipboard-list"></i><span>الإجازات</span></button>
+				<button class="nav-item" data-view="holidays"><i data-lucide="party-popper"></i><span>العطل الرسمية</span></button>
+				<button class="nav-item" data-view="reports"><i data-lucide="chart-no-axes-column-increasing"></i><span>التقارير</span></button>
+				<button class="nav-item" data-view="monthly"><i data-lucide="calendar-range"></i><span>التقرير الشهري</span></button>
+			</nav>
+			<div class="sidebar-footer">
+				<div class="user-badge">
+					<div class="user-avatar-dot">RH</div>
+					<div>
+						<div style="font-weight:600;font-size:12px;color:#fff;">مدير الموارد البشرية</div>
+						<div style="font-size:10px;color:#79a896;">admin@obayoli.ma</div>
+					</div>
+				</div>
+			</div>
+		</aside>
+
+		<main>
+			<header class="topbar">
+				<div class="breadcrumb">
+					<span class="breadcrumb-company">OBAYOLI</span>
+					<i data-lucide="chevron-left"></i>
+					<span id="breadcrumbCurrent">إدارة الرواتب</span>
+				</div>
+				<div class="cloud-status-indicator" id="cloudStatusBadge" title="قاعدة بيانات Firebase Firestore متصلة وجاهزة">
+					<span class="cloud-status-dot"></span>
+					<span id="cloudStatusText">متصل بالسحابة</span>
+				</div>
+				<div class="top-actions">
+					<button class="action-button" id="saveButton" aria-label="حفظ ومزامنة" title="حفظ ومزامنة فورية مع السحابة" style="display:flex;align-items:center;gap:6px;"><i data-lucide="cloud-upload"></i><span>حفظ ومزامنة</span></button>
+					<button class="icon-button" id="notificationsButton" aria-label="الإشعارات" title="الإشعارات"><i data-lucide="bell"></i><span class="notification-dot"></span></button>
+					<button class="icon-button" id="settingsButton" aria-label="الإعدادات" title="الإعدادات"><i data-lucide="settings-2"></i></button>
+				</div>
+			</header>
+
+			<section class="page-heading">
+				<div><h1>إدارة الرواتب</h1><p class="subtitle">نظرة شاملة على رواتب الموظفين ومستحقاتهم الشهرية.</p></div>
+				<div class="heading-controls">
+					<label class="select-wrap" aria-label="اختر الشهر"><i data-lucide="chevron-down"></i><select id="monthSelect"></select></label>
+					<button class="secondary-button" id="exportButton"><i data-lucide="download"></i><span>تصدير PDF</span></button>
+					<button class="primary-button" id="addButton"><i data-lucide="plus"></i><span>إضافة موظف</span></button>
+				</div>
+			</section>
+
+			<section class="payroll-panel" aria-labelledby="tableTitle">
+				<div class="panel-head">
+					<h2 class="panel-title" id="tableTitle">جدول الرواتب <span class="panel-count" id="shownCount">0 موظف</span></h2>
+					<div class="panel-actions">
+						<label class="search-box"><i data-lucide="search"></i><input id="searchInput" type="search" placeholder="ابحث عن موظف..." aria-label="ابحث عن موظف"></label>
+					</div>
+				</div>
+				<p class="calculation-note" style="padding-inline:20px">اليومي = الراتب الشهري ÷ 26، والساعة = اليومي ÷ 8. يُخصم الغياب والمرض وmis a pied بحسب الراتب اليومي، ويُضاف اليوم الإضافي ويوم الراحة بسعر اليوم.</p>
+				<div class="table-scroll">
+					<table class="payroll-table">
+						<thead><tr><th>اسم الموظف</th><th>الراتب الشهري</th><th>التسبيق</th><th>الراتب اليومي</th><th>الراتب للساعة</th><th>الغياب (أيام)</th><th>mis a pied (أيام)</th><th>يوم إضافي</th><th>يوم راحة</th><th>المرض (أيام)</th><th>أيام العمل</th><th>الراتب الصافي</th></tr></thead>
+						<tbody id="employeeRows"></tbody>
+					</table>
+					<div class="empty-state" id="emptyState"><i data-lucide="user-round-search"></i>لا توجد نتائج مطابقة لبحثك.</div>
+				</div>
+				<footer class="table-footer"><span id="tableInfo"></span><div class="pagination"><button class="page-button" id="previousPage" aria-label="الصفحة السابقة"><i data-lucide="chevron-right"></i></button><div class="pagination-pages" id="paginationPages"></div><button class="page-button" id="nextPage" aria-label="الصفحة التالية"><i data-lucide="chevron-left"></i></button></div></footer>
+			</section>
+			<section id="sectionView" class="section-view" aria-live="polite" hidden></section>
+		</main>
+	</div>
+
+	<dialog id="employeeDialog">
+		<div class="dialog-head"><h2>إضافة موظف جديد</h2><button class="close-button" id="closeDialog" aria-label="إغلاق"><i data-lucide="x"></i></button></div>
+		<form class="employee-form" id="employeeForm">
+			<label class="form-field">اسم الموظف<input name="name" maxlength="100" required placeholder="مثال: أحمد الإدريسي"></label>
+			<label class="form-field">رقم الهاتف<input name="phone" type="tel" inputmode="tel" maxlength="30" required placeholder="+212 6XX XXX XXX"></label>
+			<label class="form-field">رقم البطاقة الوطنية<input name="nationalId" type="text" maxlength="30" autocomplete="off" placeholder="مثال: AB123456"></label>
+			<label class="form-field">تاريخ دخول الموظف<input name="hireDate" type="date" required></label>
+			<div class="form-grid"><label class="form-field">POSTE<input name="department" list="departmentOptions" maxlength="80" required placeholder="اكتب المنصب أو القسم"></label><datalist id="departmentOptions"><option value="POST CUISINE"><option value="CUISINE"><option value="BAR"><option value="CAISSE"><option value="MENAGE"><option value="SERVEC"></datalist><label class="form-field">SALAIRE<input name="salary" type="number" min="0" required placeholder="8000"></label></div>
+			<div class="form-grid">
+				<label class="form-field">التسبيق<input name="advance" type="number" min="0" step="0.01" value="0"></label>
+				<label class="form-field">الغياب (أيام)<input name="absenceDays" type="number" min="0" step="1" value="0"></label>
+				<label class="form-field">mis a pied (أيام)<input name="misAPiedDays" type="number" min="0" step="1" value="0"></label>
+				<label class="form-field">يوم إضافي<input name="extraDays" type="number" min="0" step="1" value="0"></label>
+				<label class="form-field">يوم راحة<input name="restDays" type="number" min="0" step="1" value="0"></label>
+				<label class="form-field">المرض (أيام)<input name="sickDays" type="number" min="0" step="1" value="0"></label>
+			</div>
+			<div class="form-grid form-preview">
+				<label class="form-field">الراتب اليومي<output data-form-result="daily">0.00</output></label>
+				<label class="form-field">الراتب للساعة<output data-form-result="hourly">0.00</output></label>
+				<label class="form-field">أيام العمل<output data-form-result="workDays">26</output></label>
+				<label class="form-field">الراتب الصافي<output data-form-result="net">0.00</output></label>
+			</div>
+			<div class="form-actions"><button type="button" class="secondary-button" id="cancelDialog">إلغاء</button><button type="submit" class="primary-button">حفظ الموظف</button></div>
+		</form>
+	</dialog>
+
+	<dialog id="employeeEditDialog">
+		<div class="dialog-head"><h2>تعديل بيانات الموظف</h2><button class="close-button" type="button" data-close-dialog="employeeEditDialog" aria-label="إغلاق"><i data-lucide="x"></i></button></div>
+		<form class="employee-form" id="employeeEditForm">
+			<label class="form-field">اسم الموظف<input name="name" maxlength="100" required></label>
+			<label class="form-field">رقم الهاتف<input name="phone" type="tel" inputmode="tel" maxlength="30" required></label>
+			<label class="form-field">رقم البطاقة الوطنية<input name="nationalId" type="text" maxlength="30" autocomplete="off"></label>
+			<label class="form-field">تاريخ دخول الموظف<input name="hireDate" type="date" required></label>
+			<div class="form-grid"><label class="form-field">POSTE<input name="department" list="departmentOptions" maxlength="80" required></label><label class="form-field">SALAIRE<input name="salary" type="number" min="0" required></label></div>
+			<div class="form-actions"><button type="button" class="secondary-button" data-close-dialog="employeeEditDialog">إلغاء</button><button type="submit" class="primary-button">حفظ التعديلات</button></div>
+		</form>
+	</dialog>
+
+	<dialog id="notificationsDialog">
+		<div class="dialog-head"><h2>الإشعارات والتنبيهات</h2><button class="close-button" type="button" data-close-dialog="notificationsDialog" aria-label="إغلاق"><i data-lucide="x"></i></button></div>
+		<div class="employee-form" id="notificationsContent" style="max-height:400px;overflow-y:auto;">
+			<p class="subtitle" id="notificationsSummary"></p>
+			<div id="alertsList" style="margin:12px 0;"></div>
+			<div class="form-actions"><button type="button" class="secondary-button" data-close-dialog="notificationsDialog">إغلاق</button><button type="button" class="primary-button" data-notification-view="leaves">مراجعة الإجازات</button></div>
+		</div>
+	</dialog>
+
+	<dialog id="settingsDialog">
+		<div class="dialog-head"><h2>الإعدادات</h2><button class="close-button" type="button" data-close-dialog="settingsDialog" aria-label="إغلاق"><i data-lucide="x"></i></button></div>
+		<div class="employee-form">
+			<label class="form-field">الشركة<input value="OBAYOLI" readonly></label>
+			<label class="form-field">العملة<input value="الدرهم المغربي (د.م.)" readonly></label>
+			<label class="form-field">لغة النظام<select id="languageSelect"><option value="ar">العربية</option><option value="fr">Français</option><option value="en">English</option></select></label>
+			<label class="form-field"><span>عرض مضغوط للجدول</span><input id="compactModeToggle" type="checkbox" style="width:18px;height:18px;accent-color:#c13c77"></label>
+			<div style="border-top:1px solid var(--line);padding-top:16px;margin-top:16px;">
+				<h3 style="margin:0 0 12px;font-size:13px;">سجل الحفوظ</h3>
+				<div id="saveHistoryContainer" style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:4px;padding:8px;margin-bottom:12px;font-size:11px;"></div>
+				<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><button type="button" class="action-button" data-action="clear-save-history"><i data-lucide="trash-2"></i><span>مسح السجل</span></button></div>
+			</div>
+			<div style="border-top:1px solid var(--line);padding-top:16px;margin-top:16px;">
+				<h3 style="margin:0 0 12px;font-size:13px;">النسخ الاحتياطية</h3>
+				<div style="display:flex;gap:8px;flex-wrap:wrap;">
+					<button type="button" class="action-button" data-action="backup-download" id="backupDownloadBtn"><i data-lucide="download"></i><span>تحميل نسخة احتياطية</span></button>
+					<button type="button" class="action-button" data-action="backup-upload" id="backupUploadBtn"><i data-lucide="upload"></i><span>استرجاع من نسخة</span></button>
+					<button type="button" class="action-button" id="exportLegacyData" hidden>تصدير البيانات المحلية القديمة لهذا الجهاز</button>
+					<input type="file" id="backupFileInput" accept=".json" style="display:none;">
+				</div>
+			</div>
+			<div class="form-actions"><button type="button" class="primary-button" data-close-dialog="settingsDialog">تم</button></div>
+		</div>
+	</dialog>
+	<div class="toast" id="toast" role="status"><i data-lucide="circle-check"></i><span id="toastMessage">تم بنجاح</span></div>
+
+	<script src="/auth-config.js"></script>
+	<script src="/cloud-client.js"></script>
+	<script src="/permissions.js"></script>
+	<script src="/app.js"></script>
+</body>
+</html>

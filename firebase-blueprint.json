@@ -1,0 +1,98 @@
+{
+  "entities": {
+    "Employee": {
+      "title": "Employee",
+      "description": "Employee record including personal details, department, and salary information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "nationalId": { "type": "string", "maxLength": 50 },
+        "hireDate": { "type": "string", "maxLength": 30 },
+        "department": { "type": "string", "maxLength": 80 },
+        "salary": { "type": "number" },
+        "advance": { "type": "number" },
+        "absenceDays": { "type": "number" },
+        "misAPiedDays": { "type": "number" },
+        "extraDays": { "type": "number" },
+        "restDays": { "type": "number" },
+        "sickDays": { "type": "number" },
+        "status": { "type": "string", "maxLength": 30 },
+        "avatar": { "type": "string", "maxLength": 10 },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "salary"]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Daily attendance statuses and timings for all employees",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "maxLength": 30 },
+        "employees": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["date"]
+    },
+    "LeaveRequest": {
+      "title": "LeaveRequest",
+      "description": "Leave requests submitted for employees",
+      "type": "object",
+      "properties": {
+        "employee": { "type": "string", "maxLength": 120 },
+        "type": { "type": "string", "maxLength": 50 },
+        "fromDate": { "type": "string", "maxLength": 30 },
+        "toDate": { "type": "string", "maxLength": 30 },
+        "days": { "type": "number" },
+        "status": { "type": "string", "maxLength": 30 },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["employee", "type", "fromDate", "toDate"]
+    },
+    "WeeklySchedule": {
+      "title": "WeeklySchedule",
+      "description": "Shift and timetable schedules for weeks",
+      "type": "object",
+      "properties": {
+        "weekStartDate": { "type": "string", "maxLength": 30 },
+        "scheduleData": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["weekStartDate"]
+    },
+    "SystemState": {
+      "title": "SystemState",
+      "description": "Global state payload for HR management system",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 50 },
+        "payload": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id"]
+    }
+  },
+  "firestore": {
+    "/employees/{employeeId}": {
+      "schema": "#/entities/Employee",
+      "description": "Individual employee document"
+    },
+    "/attendance/{attendanceDate}": {
+      "schema": "#/entities/AttendanceRecord",
+      "description": "Daily attendance registers"
+    },
+    "/leaves/{leaveId}": {
+      "schema": "#/entities/LeaveRequest",
+      "description": "Leave requests and approval records"
+    },
+    "/schedules/{weekDate}": {
+      "schema": "#/entities/WeeklySchedule",
+      "description": "Weekly task and shift assignments"
+    },
+    "/system/{metaId}": {
+      "schema": "#/entities/SystemState",
+      "description": "System backups, state snapshots, and global configs"
+    }
+  }
+}

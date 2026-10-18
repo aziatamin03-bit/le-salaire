@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": false,
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "include": ["app.js", "auth-config.js", "cloud-client.js", "permissions.js"],
+  "exclude": ["node_modules", "assets", "dist"]
+}
